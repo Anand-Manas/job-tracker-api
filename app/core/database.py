@@ -2,12 +2,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-
-#DATABASE_URL = "postgresql://postgres:Pgsql_12345@localhost:5432/postgres"
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine)
