@@ -5,6 +5,8 @@ from app.core.security import hash_password, verify_password
 from app.core.jwt import create_access_token
 from app.models.db_models import User
 from app.models.schemas import UserCreate, Token
+from fastapi import Request, Depends
+from app.core.rate_limiter import rate_limit
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -18,6 +20,7 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login(user: UserCreate, db: Session = Depends(get_db)):
+    rate_limit(request)
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
