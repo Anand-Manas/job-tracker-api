@@ -20,21 +20,35 @@ security = HTTPBearer()
 
 @router.get("/")
 def list_apps(db=Depends(get_db)):
-    cached = redis_client.get("applications")
-
-    if cached:
-        return json.loads(cached)
+    if redis_client:
+        try:
+            cached = redis_client.get("applications")
+            if cached:
+                return json.loads(cached)
+        except Exception:
+            pass 
 
     apps = get_all_applications(db)
-    redis_client.setex("applications", 60, json.dumps([
-        {
-            "id": a.id,
-            "company": a.company,
-            "position": a.position,
-            "status": a.status
-        } for a in apps
-    ]))
+
+    if redis_client:
+        try:
+            redis_client.setex(
+                "applications",
+                60,
+                json.dumps([
+                    {
+                        "id": a.id,
+                        "company": a.company,
+                        "position": a.position,
+                        "status": a.status
+                    } for a in apps
+                ])
+            )
+        except Exception:
+            pass
+
     return apps
+
 
 @router.post("/", response_model=ApplicationResponse, status_code=201)
 def create_app(
@@ -43,13 +57,19 @@ def create_app(
     db=Depends(get_db)
 ):
     app = create_application(db, data)
+
     background_tasks.add_task(
         log_activity,
         data.company,
         data.position
     )
 
-    redis_client.delete("applications")
+    if redis_client:
+        try:
+            redis_client.delete("applications")
+        except Exception:
+            pass
+
     return app
 
 @router.get("/secure")
