@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 from dotenv import load_dotenv
-import os
+from app.models.db_models import Base
 
 load_dotenv()
 
@@ -23,6 +23,9 @@ SessionLocal = sessionmaker(
 
 Base = declarative_base()
 
+def init_db():
+    Base.metadata.create_all(bind=engine)
+    
 def get_db():
     db = SessionLocal()
     try:

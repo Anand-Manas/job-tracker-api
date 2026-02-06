@@ -3,6 +3,11 @@ from app.api.routes import applications, auth
 from fastapi.middleware.cors import CORSMiddleware
 import time
 from fastapi import Request
+from fastapi import FastAPI
+from app.core.database import init_db
+from app.core.database import engine
+from app.models.db_models import Base
+
 
 app = FastAPI()
 
@@ -13,6 +18,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def startup_event():
+    Base.metadata.create_all(bind=engine)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
