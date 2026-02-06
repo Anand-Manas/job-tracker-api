@@ -1,29 +1,28 @@
-from fastapi import FastAPI
-from app.api.routes import applications, auth
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import time
-from fastapi import Request
-from fastapi import FastAPI
-from app.core.database import init_db
-from app.core.database import engine
-from app.models.db_models import Base
 
+from app.api.routes import applications, auth
+from app.core.database import engine, Base
+from app.models import db_models  
 
 app = FastAPI()
 
+# ------------------ CORS ------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # later restrict to frontend domain
+    allow_origins=["*"],  # restrict in real prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
+# ------------------ STARTUP ------------------
 @app.on_event("startup")
 def startup_event():
     Base.metadata.create_all(bind=engine)
 
+# ------------------ LOGGING MIDDLEWARE ------------------
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     start_time = time.time()
@@ -36,6 +35,6 @@ async def log_requests(request: Request, call_next):
     )
     return response
 
-
+# ------------------ ROUTES ------------------
 app.include_router(applications.router)
 app.include_router(auth.router)
